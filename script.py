@@ -9,18 +9,12 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.utils import get_random_id
 import cmds
 
-def get_price():
-    price_page = soup.find("li", {'data-name': 'offers'})
-    price_page = price_page.find('a').get('href')
-    price_page = 'https://market.yandex.ru' + price_page
-    # print(pricePage)
-    price_soup = parsingLib.makeSoup(price_page)
-    prices = parsingLib.allDIV(price_soup, "price")
-    return prices
+
+
 
 
 url = ""
-attachments = []
+# attachments = []
 
 # soup = parsingLib.makeSoup(url)
 workbook = xlsxwriter.Workbook("prices.xlsx")                # создаем новый Excel-документ
@@ -62,30 +56,10 @@ for event in longpoll.listen():
             for value in values:
                 if event.text == value:
                     if keys == "cPrice":
-                        vk.messages.send(user_id=event.user_id, message='Получаю цены',
-                                         random_id=get_random_id())
-                        myPrices = get_price()
-                        myPrices1 = []
-                        for myPrice in myPrices:
-                            myPrices1.append('\n' + myPrice.text)
-                        vk.messages.send(user_id=event.user_id, message=myPrices1,
-                                         random_id=get_random_id())
+                        cmds.cmd_price(soup, event, vk_session)
+
                     if keys == "cIMG":
-                        for img in imgs:
-                            imgSource = img.find('img').get('src')
-                            imgSource = "https:" + imgSource
-                            upload = VkUpload(vk_session)
-                            image = requests.get(imgSource, stream=True)
-                            photo = upload.photo_messages(photos=image.raw)[0]
-                            attachments.append(
-                                'photo{}_{}'.format(photo['owner_id'], photo['id'])
-                            )
-                        vk.messages.send(
-                            user_id=event.user_id,
-                            attachment=','.join(attachments),
-                            message='Фото товара',
-                            random_id=get_random_id()
-                        )
+                        cmds.cmd_img(imgs, event, vk_session)
 
         if event.text[8:24] == 'market.yandex.ru':
             if event.from_user:
