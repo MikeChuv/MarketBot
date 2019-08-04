@@ -7,7 +7,7 @@ import xlsxwriter
 from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.utils import get_random_id
-
+import cmds
 
 def get_price():
     price_page = soup.find("li", {'data-name': 'offers'})
