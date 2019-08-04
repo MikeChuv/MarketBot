@@ -4,51 +4,102 @@ import shutil
 import parsingLib
 import vk_api
 import xlsxwriter
+from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
-import random
+from vk_api.utils import get_random_id
 
-url = "https://market.yandex.ru/product--videokarta-gigabyte-geforce-rtx-2060-super-1845mhz-pci-e-3-0-8192mb-14000mhz-256-bit-3xhdmi-hdcp-aorus/508267028?show-uid=15642358034835005982316003&nid=55314&glfilter=7893318%3A431404&context=search"
 
-soup = parsingLib.makeSoup(url)
+def get_price():
+    price_page = soup.find("li", {'data-name': 'offers'})
+    price_page = price_page.find('a').get('href')
+    price_page = 'https://market.yandex.ru' + price_page
+    # print(pricePage)
+    price_soup = parsingLib.makeSoup(price_page)
+    prices = parsingLib.allDIV(price_soup, "price")
+    return prices
+
+
+url = ""
+attachments = []
+
+# soup = parsingLib.makeSoup(url)
 workbook = xlsxwriter.Workbook("prices.xlsx")                # создаем новый Excel-документ
 worksheet = workbook.add_worksheet()                        # создаем в нем новый лист
-imgs = parsingLib.allDIV(soup, "n-gallery__item")
+# imgs = parsingLib.allDIV(soup, "n-gallery__item")
 vk_session = vk_api.VkApi(token='3d845b2a4ef1487db3289577b38b1ceca74997182e00470743e8166e3f8b52d459bf89183f55e5aabcc53')
 
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
-commands = ['Скинь картинки', 'Скинь магазины', 'Покажи цены']
+
+
+# lets make a dictionary
+opts = {
+    "tbr": (),
+    "cmds": {
+        "tbr": ('покажи', 'сколько', 'скинь', 'расскажи'),
+        "cIMG": ('скинь картинки', 'фото', 'покажи картинки'),
+        "cURL": ('держи ссылку', 'вот это'),
+        "cPrice": ('сколько стоит', 'какая цена', 'цена', 'стоимость'),
+        "cShop": ('где продают', 'где купить', 'магазины')
+    }
+
+}
+
 
 for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
         # Слушаем longpoll, если пришло сообщение то:
+        print(event.text[8:24])
         if event.text == 'Привет' or event.text == 'привет':
             if event.from_user:
-                vk.messages.send(user_id=event.user_id, message='Мои комманды', random_id=random.randint(1, 999999999))
-                # for command in commands:
-                #     print(command)
-                vk.messages.send(user_id=event.user_id, message=commands, random_id=random.randint(1, 999999999))
+                vk.messages.send(user_id=event.user_id, message='Привет!\n Напиши мне то, что ты хочешь',
+                                 random_id=get_random_id())
+
             elif event.from_chat:
-                vk.messages.send(chat_id=event.chat_id, message='Ваш текст', random_id=random.randint(1, 999999999))
+                vk.messages.send(chat_id=event.chat_id, message='Ваш текст', random_id=get_random_id())
+
+        for keys, values in opts["cmds"].items():
+            for value in values:
+                if event.text == value:
+                    if keys == "cPrice":
+                        vk.messages.send(user_id=event.user_id, message='Получаю цены',
+                                         random_id=get_random_id())
+                        myPrices = get_price()
+                        myPrices1 = []
+                        for myPrice in myPrices:
+                            myPrices1.append('\n' + myPrice.text)
+                        vk.messages.send(user_id=event.user_id, message=myPrices1,
+                                         random_id=get_random_id())
+                    if keys == "cIMG":
+                        for img in imgs:
+                            imgSource = img.find('img').get('src')
+                            imgSource = "https:" + imgSource
+                            upload = VkUpload(vk_session)
+                            image = requests.get(imgSource, stream=True)
+                            photo = upload.photo_messages(photos=image.raw)[0]
+                            attachments.append(
+                                'photo{}_{}'.format(photo['owner_id'], photo['id'])
+                            )
+                        vk.messages.send(
+                            user_id=event.user_id,
+                            attachment=','.join(attachments),
+                            message='Фото товара',
+                            random_id=get_random_id()
+                        )
+
+        if event.text[8:24] == 'market.yandex.ru':
+            if event.from_user:
+                vk.messages.send(user_id=event.user_id, message='Ссылка получена',
+                                 random_id=get_random_id())
+            url = event.text
+            soup = parsingLib.makeSoup(url)
+            imgs = parsingLib.allDIV(soup, "n-gallery__item")
+
+# переписать этот блок в место со словарем и добавить в словарь команду для картинок
+# добавить модуль нечеткого сравнения для комманд словаря
 
 
 
 
-# i = 1
-# for img in imgs:
-#     parsingLib.parseImg(img, "card", str(i))
-#     i += 1
-
-pricePage = soup.find("li", {'data-name': 'offers'})
-pricePage = pricePage.find('a').get('href')
-pricePage = 'https://market.yandex.ru' + pricePage
-print(pricePage)
-
-priceSoup = parsingLib.makeSoup(pricePage)
-prices = parsingLib.allDIV(priceSoup, "price")
-
-for price in prices:
-    priceText = price.text
-    print(priceText)
 
 # token: 3d845b2a4ef1487db3289577b38b1ceca74997182e00470743e8166e3f8b52d459bf89183f55e5aabcc53
