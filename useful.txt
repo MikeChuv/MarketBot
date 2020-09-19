@@ -1,0 +1,21 @@
+﻿'http[s]?://(?:[a-zA-Z]    |    [0-9]    |    [$-_@.&+]    |    ( ?:%[0-9a-fA-F] [0-9a-fA-F] ) )+'
+
+
+
+
+re.findall(r'https?://(?:[a-zA-Z]|[0-9]|[/.-_])+', str(img)):
+
+
+
+
+https://www.e-katalog.ru/ek-list.php?soft_s_=1&search_=clutch+gm10
+https://www.e-katalog.ru/ek-list.php?search_=
+
+https://www.e-katalog.ru/ek-list.php?search_=clutch+gm10
+
+https://www.e-katalog.ru/ek-list.php?search_=%D0%BA%D0%BD%D0%B8%D0%B3%D0%B0
+
+
+
+
+https://www.e-katalog.ru/clcp.php?ep_=R81B231J3H331J0A231J0M4J1J0A0J1J49131J04131J2K2J1J4A0J1J2P0J1J154J1J194J1J50531J12231J51531J1Q131J51531I0E0J1J4Q4J&model_=Lenovo+IdeaPad+5+14IIL05+&idSite_=1&idGood_=1802455&PSID_=5329032515
